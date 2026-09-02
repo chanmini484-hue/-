@@ -1,0 +1,91 @@
+from datetime import date
+
+
+def read_exam_date() -> date: #전역 함수로 시험기간에 따른 학습 계획을 세우기 위해 시험 날짜를 입력받는 함수입니다.
+	while True:
+		value = input("시험 날짜를 입력하세요 (예: 2026-10-15): ").strip()
+		try:
+			exam_date = date.fromisoformat(value)
+		except ValueError:
+			print("날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력하세요.")
+			continue
+
+		if exam_date < date.today():
+			print("오늘 이후의 날짜를 입력하세요.")
+			continue
+		return exam_date
+
+
+def read_positive_integer(prompt: str, maximum: int | None = None) -> int:
+	while True:
+		try:
+			value = int(input(prompt).strip())
+		except ValueError:
+			print("숫자로 입력하세요.")
+			continue
+
+		if value < 1 or (maximum is not None and value > maximum):
+			limit = f"1에서 {maximum} 사이" if maximum else "1 이상"
+			print(f"{limit}의 숫자를 입력하세요.")
+			continue
+		return value
+
+
+def read_subjects() -> list[str]:
+	print("공부할 과목을 입력하세요. 입력을 끝내려면 빈 줄을 누르세요.")
+	subjects: list[str] = []
+	while True:
+		subject = input(f"과목 {len(subjects) + 1}: ").strip()
+		if not subject:
+			if subjects:
+				return subjects
+			print("과목을 한 개 이상 입력해야 합니다.")
+			continue
+		if subject not in subjects:
+			subjects.append(subject)
+		else:
+			print("이미 추가된 과목입니다.")
+
+
+def make_plan(exam_date: date, daily_hours: int, subjects: list[str]) -> list[dict[str, str]]:
+	days_left = max(1, (exam_date - date.today()).days)
+	plan_days = min(days_left, 14)
+	minutes_per_subject = max(1, daily_hours * 60 // len(subjects))
+
+	plan = []
+	for day_number in range(1, plan_days + 1):
+		subject = subjects[(day_number - 1) % len(subjects)]
+		plan.append(
+			{
+				"day": f"DAY {day_number}",
+				"subject": subject,
+				"task": "개념 정리와 대표 문제 풀이",
+				"time": f"{minutes_per_subject}분",
+			}
+		)
+	return plan
+
+
+def print_plan(exam_date: date, daily_hours: int, subjects: list[str], plan: list[dict[str, str]]) -> None:
+	days_left = max(1, (exam_date - date.today()).days)
+	print("\n" + "=" * 48)
+	print("STUDYMATE 학습 계획")
+	print("=" * 48)
+	print(f"시험일: {exam_date} | 남은 기간: {days_left}일")
+	print(f"과목: {', '.join(subjects)} | 하루 공부 시간: {daily_hours}시간\n")
+	for item in plan:
+		print(f"{item['day']:<8} {item['subject']:<12} {item['time']:>5}  {item['task']}")
+	print("=" * 48)
+
+
+def main() -> None:
+	print("StudyMate에 오신 것을 환영합니다!\n")
+	exam_date = read_exam_date()
+	daily_hours = read_positive_integer("하루 공부 시간(시간, 최대 12): ", maximum=12)
+	subjects = read_subjects()
+	plan = make_plan(exam_date, daily_hours, subjects)
+	print_plan(exam_date, daily_hours, subjects, plan)
+
+
+if __name__ == "__main__":
+	main()
